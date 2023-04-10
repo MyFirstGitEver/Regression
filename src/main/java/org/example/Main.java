@@ -74,8 +74,6 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Main {
     public static void main(String[] args) throws IOException {
@@ -135,35 +133,5 @@ public class Main {
         fIn.close();
 
         return data;
-    }
-}
-
-class LogisticRegression extends Regression{
-
-    LogisticRegression(PredictFunction predictor, Pair<Vector, Float>[] dataset) {
-        super(predictor, dataset);
-    }
-
-    @Override
-    public float cost(){
-        float total = 0;
-
-        // -(yi * log(sigmoid) + (1 - yi)*log(1 - sigmoid))
-
-        for(Pair<Vector, Float> point : dataset){
-            float predictPercent = predictor.predict(point.first, w, b);
-            total += -(point.second * Math.log(predictPercent) + (1 - point.second) * Math.log(1 - predictPercent));
-        }
-
-        return total / dataset.length;
-    }
-
-    @Override
-    protected float predict(Vector x) {
-        return predictor.predict(x, w, b);
-    }
-
-    public boolean isPositive(Vector x){
-        return predict(x) >= 0.5f;
     }
 }

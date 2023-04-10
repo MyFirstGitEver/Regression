@@ -8,8 +8,8 @@ abstract class PredictFunction {
         float total = 0;
         int datasetLength = dataset.length;
 
-        for(int j=0;j<datasetLength;j++){
-            total += (predict(dataset[j].first, w, b) - dataset[j].second);
+        for (Pair<Vector, Float> vectorFloatPair : dataset) {
+            total += (predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
         }
 
         return total / datasetLength;
@@ -17,7 +17,7 @@ abstract class PredictFunction {
 }
 
 class Vector{
-    private float[] points;
+    private final float[] points;
     Vector(float... points){
         this.points = points;
     }
@@ -69,8 +69,8 @@ class Vector{
     float sum(){
         float total = 0;
 
-        for(int i=0;i<points.length;i++){
-            total += points[i];
+        for (float point : points) {
+            total += point;
         }
 
         return total;
@@ -91,10 +91,10 @@ class PolynomialPredictor extends PredictFunction{
         int features = w.size();
 
         for(int i=0;i<features;i++){
-            for(int j=0;j<datasetLength;j++){
+            for (Pair<Vector, Float> vectorFloatPair : dataset) {
                 float curr = derivative.x(i);
 
-                curr += dataset[j].first.x(i) * (predict(dataset[j].first, w, b) - dataset[j].second);
+                curr += vectorFloatPair.first.x(i) * (predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
                 derivative.setX(i, curr);
             }
 
@@ -120,10 +120,10 @@ class SinePredictor extends PredictFunction{
         int features = w.size();
 
         for(int i=0;i<features;i++){
-            for(int j=0;j<datasetLength;j++){
+            for (Pair<Vector, Float> vectorFloatPair : dataset) {
                 float curr = derivative.x(i);
 
-                curr += Math.sin(dataset[j].first.x(i)) * (predict(dataset[j].first, w, b) - dataset[j].second);
+                curr += Math.sin(vectorFloatPair.first.x(i)) * (predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
                 derivative.setX(i, curr);
             }
 
@@ -159,7 +159,7 @@ class Pair<X, Y>{
 // w = (w2, w1, w0);
 // b float
 // x = (x2, x1, x0)
-public class LinearRegression extends Regression {
+class LinearRegression extends Regression {
 
     LinearRegression(PredictFunction predictor, Pair<Vector, Float>[] dataset) {
         super(predictor, dataset);
@@ -189,7 +189,7 @@ public class LinearRegression extends Regression {
     }
 }
 
-abstract class Regression{
+public abstract class Regression{
     protected final PredictFunction predictor;
     protected final Vector w;
     protected float b;
@@ -216,5 +216,35 @@ abstract class Regression{
         }
 
         System.out.println(cost);
+    }
+}
+
+class LogisticRegression extends Regression{
+
+    LogisticRegression(PredictFunction predictor, Pair<Vector, Float>[] dataset) {
+        super(predictor, dataset);
+    }
+
+    @Override
+    public float cost(){
+        float total = 0;
+
+        // -(yi * log(sigmoid) + (1 - yi)*log(1 - sigmoid))
+
+        for(Pair<Vector, Float> point : dataset){
+            float predictPercent = predictor.predict(point.first, w, b);
+            total -= (point.second * Math.log(predictPercent) + (1 - point.second) * Math.log(1 - predictPercent));
+        }
+
+        return total / dataset.length;
+    }
+
+    @Override
+    protected float predict(Vector x) {
+        return predictor.predict(x, w, b);
+    }
+
+    public boolean isPositive(Vector x){
+        return predict(x) >= 0.5f;
     }
 }
