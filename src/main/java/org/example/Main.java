@@ -70,8 +70,71 @@ package org.example;
 //        regression.train(0.01f);
 //        System.out.println(regression.predict(new Vector(pi / 4, pi / 2)));
 
+import java.io.File;
+import java.io.FileInputStream;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+
 public class Main {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Pair<Vector, Float>[] dataset = loadData();
+
+        System.out.println(new LogisticRegression(new LogisticPredictor(), dataset).cost());
+    }
+
+    private static Pair<Vector, Float>[] loadData() throws IOException{
+        File f = new File("test.txt");
+
+        FileInputStream fIn = new FileInputStream(f);
+
+        String s = new String(fIn.readAllBytes());
+        String[] xAndY = s.split("\r\n\r\n");
+
+        String[] allX = xAndY[0].split("\r\n");
+
+        Pair<Vector, Float>[] data = new Pair[allX.length];
+        int index = 0;
+        for(String x : allX){
+            int endOfFirst = -1, startOfSecond = -1;
+            for(int i=0;i<x.length();i++){
+                if(x.charAt(i) != ' '){
+                    continue;
+                }
+
+                endOfFirst = i;
+                for(int j=i;j<=x.length();j++){
+                    if(x.charAt(j) != ' '){
+                        startOfSecond = j;
+                        break;
+                    }
+                }
+                break;
+            }
+
+
+            data[index] = new Pair<>(new Vector(
+                    Float.parseFloat(x.substring(0, endOfFirst)),
+                    Float.parseFloat(x.substring(startOfSecond))), 0.0f);
+            index++;
+        }
+
+        String[] allY = xAndY[1].split("\r\n");
+
+        index = 0;
+        for(String y : allY){
+            String[] points = y.split(" ");
+
+            for(String point : points){
+                data[index].second = Float.parseFloat(point);
+                index++;
+            }
+        }
+
+        fIn.close();
+
+        return data;
     }
 }
 
@@ -92,7 +155,7 @@ class LogisticRegression extends Regression{
             total += -(point.second * Math.log(predictPercent) + (1 - point.second) * Math.log(1 - predictPercent));
         }
 
-        return total;
+        return total / dataset.length;
     }
 
     @Override
