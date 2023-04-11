@@ -74,12 +74,15 @@ import java.io.File;
 import java.io.FileInputStream;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Pair<Vector, Float>[] dataset = loadData();
+        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), loadData());
+        regression.train(0.001f);
 
-        System.out.println(new LogisticRegression(new LogisticPredictor(), dataset).cost());
+        System.out.println(BigDecimal.valueOf(regression.cost()));
     }
 
     private static Pair<Vector, Float>[] loadData() throws IOException{
