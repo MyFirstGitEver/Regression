@@ -79,7 +79,8 @@ import java.math.RoundingMode;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), loadData());
+        Pair<Vector, Float>[] dataset = loadData();
+        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), dataset);
         regression.train(0.001f);
 
         System.out.println(BigDecimal.valueOf(regression.cost()));

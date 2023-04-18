@@ -1,5 +1,8 @@
 package org.example;
 
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.MathContext;
 import java.math.RoundingMode;
@@ -229,6 +232,24 @@ public abstract class Regression{
         }
 
         System.out.println(cost);
+    }
+
+    private void saveParams() throws IOException {
+        BufferedWriter writer = new BufferedWriter(new FileWriter("w.param"));
+        for(int i=0;i<w.size();i++){
+            writer.write(Float.toString(w.x(i)));
+            writer.newLine();
+        }
+
+        writer.close();
+
+        writer = new BufferedWriter(new FileWriter("b.param"));
+        for(int i=0;i<b;i++){
+            writer.write(Float.toString(b));
+            writer.newLine();
+        }
+
+        writer.close();
     }
 }
 
