@@ -8,7 +8,7 @@ import java.math.MathContext;
 import java.math.RoundingMode;
 
 abstract class PredictFunction {
-    abstract  BigDecimal predict(Vector x, Vector w, float b);
+    abstract float predict(Vector x, Vector w, float b);
     abstract  Vector derivativeByW(Vector w, float b, Pair<Vector, Float>[] dataset);
 
     public float derivativeByB(Vector w, float b, Pair<Vector, Float>[] dataset) {
@@ -16,7 +16,7 @@ abstract class PredictFunction {
         int datasetLength = dataset.length;
 
         for (Pair<Vector, Float> vectorFloatPair : dataset) {
-            total += (predict(vectorFloatPair.first, w, b).floatValue() - vectorFloatPair.second);
+            total += (predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
         }
 
         return total / datasetLength;
@@ -86,8 +86,8 @@ class Vector{
 
 class PolynomialPredictor extends PredictFunction{
     @Override
-    public BigDecimal predict(Vector x, Vector w, float b) {
-        return BigDecimal.valueOf(x.dot(w) + b);
+    public float predict(Vector x, Vector w, float b) {
+        return x.dot(w) + b;
     }
 
     @Override
@@ -102,7 +102,7 @@ class PolynomialPredictor extends PredictFunction{
                 float curr = derivative.x(i);
 
                 curr += vectorFloatPair.first.x(i) *
-                        (predict(vectorFloatPair.first, w, b).floatValue() - vectorFloatPair.second);
+                        (predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
                 derivative.setX(i, curr);
             }
 
@@ -116,9 +116,8 @@ class PolynomialPredictor extends PredictFunction{
 // w1*sin(x1) + w0*sin(x0) + b
 class SinePredictor extends PredictFunction{
     @Override
-    public BigDecimal predict(Vector x, Vector w, float b) {
-        return BigDecimal.valueOf(
-                (float) (w.x(1) * Math.sin(x.x(1)) + w.x(0) * Math.sin(x.x(0)) + b));
+    public float predict(Vector x, Vector w, float b) {
+        return (float) (w.x(1) * Math.sin(x.x(1)) + w.x(0) * Math.sin(x.x(0)) + b);
     }
 
     @Override
@@ -133,7 +132,7 @@ class SinePredictor extends PredictFunction{
                 float curr = derivative.x(i);
 
                 curr += Math.sin(vectorFloatPair.first.x(i)) * (
-                        predict(vectorFloatPair.first, w, b).floatValue() - vectorFloatPair.second);
+                        predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
                 derivative.setX(i, curr);
             }
 
@@ -146,15 +145,10 @@ class SinePredictor extends PredictFunction{
 
 class LogisticPredictor extends PolynomialPredictor{
     @Override
-    public BigDecimal predict(Vector x, Vector w, float b) {
+    public float predict(Vector x, Vector w, float b) {
         float term = x.dot(w) + b;
 
-        BigDecimal one = new BigDecimal("1");
-        BigDecimal result = one.divide(BigDecimalMath.exp(
-                BigDecimal.valueOf(-term).setScale(10, RoundingMode.HALF_EVEN)).add(one),
-                new MathContext(10, RoundingMode.HALF_EVEN));
-
-        return result.setScale(10, RoundingMode.HALF_EVEN);
+        return (float) (1 / (Math.exp(-term) + 1));
     }
 }
 
@@ -188,7 +182,7 @@ class LinearRegression extends Regression {
         float total = 0;
 
         for(Pair<Vector, Float> p : dataset){
-            float term = (p.second - predictor.predict(p.first, w, b).floatValue());
+            float term = (p.second - predictor.predict(p.first, w, b));
             total += term * term;
         }
 
@@ -196,9 +190,9 @@ class LinearRegression extends Regression {
     }
 
     @Override
-    public BigDecimal predict(Vector x){
+    public float predict(Vector x){
         if(x.size() != w.size()){
-            return new BigDecimal("NaN");
+            return Float.NaN;
         }
 
         return predictor.predict(x, w, b);
@@ -217,13 +211,13 @@ public abstract class Regression{
     }
 
     abstract public float cost();
-    abstract protected BigDecimal predict(Vector x);
+    abstract protected float predict(Vector x);
 
-    public void train(float learningRate){
+    public void train(float learningRate, int iter){
         float cost;
         int iteration = 0;
 
-        while((cost = Math.abs(cost())) > 0.0001 && iteration < 3000){
+        while((cost = Math.abs(cost())) > 0.0001 && iteration < iter){
             Vector v = predictor.derivativeByW(w, b, dataset).scaleBy(learningRate);
 
             b -= learningRate * predictor.derivativeByB(w, b, dataset);
@@ -253,7 +247,7 @@ public abstract class Regression{
     }
 }
 
-class LogisticRegression extends Regression{
+class LogisticRegression extends Regression {
 
     LogisticRegression(PredictFunction predictor, Pair<Vector, Float>[] dataset) {
         super(predictor, dataset);
@@ -265,24 +259,22 @@ class LogisticRegression extends Regression{
 
         // -(yi * log(sigmoid) + (1 - yi)*log(1 - sigmoid))
 
-        BigDecimal one = new BigDecimal("1");
-
         for(Pair<Vector, Float> point : dataset){
-            BigDecimal predictPercent = predictor.predict(point.first, w, b);
+            float predictPercent = predictor.predict(point.first, w, b);
 
-            total -= (point.second * BigDecimalMath.log(predictPercent).floatValue())
-                    + (1 - point.second) * BigDecimalMath.log(one.subtract(predictPercent)).floatValue();
+            total -= (point.second * Math.log(predictPercent + 0.0001))
+                    + (1 - point.second) * Math.log(1 - predictPercent + 0.0001);
         }
 
         return total / dataset.length;
     }
 
     @Override
-    protected BigDecimal predict(Vector x) {
+    protected float predict(Vector x) {
         return predictor.predict(x, w, b);
     }
 
     public boolean isPositive(Vector x){
-        return predict(x).floatValue() >= 0.5f;
+        return predict(x) >= 0.5f;
     }
 }

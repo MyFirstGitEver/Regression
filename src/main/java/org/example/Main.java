@@ -79,11 +79,29 @@ import java.math.RoundingMode;
 
 public class Main {
     public static void main(String[] args) throws IOException {
-        Pair<Vector, Float>[] dataset = loadData();
+        ExcelReader reader = new ExcelReader("D:\\Source code\\Data\\Titanic\\train.xlsx");
+        Pair<Vector, Float>[] dataset = reader.createLabeledDataset(0, 0, 0, 0, 1);
+
         LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), dataset);
-        regression.train(0.001f);
+        regression.train(0.001f,90_000);
 
         System.out.println(BigDecimal.valueOf(regression.cost()));
+
+        test(regression, new ExcelReader("D:\\Source code\\Data\\Titanic\\test.xlsx")
+                .createLabeledDataset(0, 0, 0, 0, 1));
+    }
+
+    static void test(LogisticRegression classifier, Pair<Vector, Float>[] dataset){
+
+        int hit = 0;
+        for(Pair<Vector, Float> p : dataset){
+            boolean survived = classifier.isPositive(p.first);
+
+            if((survived && p.second == 1) || (!survived && p.second == 0)){
+                hit++;
+            }
+        }
+        System.out.println(hit / (float)dataset.length * 100 + "%");
     }
 
     private static Pair<Vector, Float>[] loadData() throws IOException{
