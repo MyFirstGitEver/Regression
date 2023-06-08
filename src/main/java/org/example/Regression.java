@@ -113,36 +113,6 @@ class PolynomialPredictor extends PredictFunction{
     }
 }
 
-// w1*sin(x1) + w0*sin(x0) + b
-class SinePredictor extends PredictFunction{
-    @Override
-    public float predict(Vector x, Vector w, float b) {
-        return (float) (w.x(1) * Math.sin(x.x(1)) + w.x(0) * Math.sin(x.x(0)) + b);
-    }
-
-    @Override
-    public Vector derivativeByW(Vector w, float b, Pair<Vector, Float>[] dataset) {
-        Vector derivative = new Vector(w.size());
-
-        int datasetLength = dataset.length;
-        int features = w.size();
-
-        for(int i=0;i<features;i++){
-            for (Pair<Vector, Float> vectorFloatPair : dataset) {
-                float curr = derivative.x(i);
-
-                curr += Math.sin(vectorFloatPair.first.x(i)) * (
-                        predict(vectorFloatPair.first, w, b) - vectorFloatPair.second);
-                derivative.setX(i, curr);
-            }
-
-            derivative.setX(i, derivative.x(i) / datasetLength);
-        }
-
-        return derivative;
-    }
-}
-
 class LogisticPredictor extends PolynomialPredictor{
     @Override
     public float predict(Vector x, Vector w, float b) {
@@ -218,14 +188,16 @@ public abstract class Regression{
         int iteration = 0;
 
         while((cost = Math.abs(cost())) > 0.0001 && iteration < iter){
+            if(iteration != 0 && iteration % 30 == 0) {
+                System.out.println(iteration + " iterations have passed. Cost: " + cost);
+            }
+
             Vector v = predictor.derivativeByW(w, b, dataset).scaleBy(learningRate);
 
             b -= learningRate * predictor.derivativeByB(w, b, dataset);
             w.subtract(v);
             iteration++;
         }
-
-        System.out.println(cost);
     }
 
     private void saveParams() throws IOException {
@@ -254,7 +226,7 @@ class LogisticRegression extends Regression {
     }
 
     @Override
-    public float cost(){
+    public float cost() {
         float total = 0;
 
         // -(yi * log(sigmoid) + (1 - yi)*log(1 - sigmoid))

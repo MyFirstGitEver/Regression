@@ -76,19 +76,84 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Arrays;
 
 public class Main {
     public static void main(String[] args) throws IOException {
         ExcelReader reader = new ExcelReader("D:\\Source code\\Data\\Titanic\\train.xlsx");
-        Pair<Vector, Float>[] dataset = reader.createLabeledDataset(0, 0, 0, 0, 1);
+        Pair<Vector, Float>[] trainingSet =
+                reader.createLabeledDataset(0, 0, 0, 0, 1);
 
-        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), dataset);
-        regression.train(0.001f,90_000);
+        reader = new ExcelReader("D:\\Source code\\Data\\Titanic\\test.xlsx");
+        Pair<Vector, Float>[] testSet = reader.createLabeledDataset(0, 0, 0, 0, 1);
 
-        System.out.println(BigDecimal.valueOf(regression.cost()));
+        featureScaling(trainingSet, testSet);
 
-        test(regression, new ExcelReader("D:\\Source code\\Data\\Titanic\\test.xlsx")
-                .createLabeledDataset(0, 0, 0, 0, 1));
+        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), trainingSet);
+        regression.train(0.001f,1000);
+
+        System.out.println(regression.cost());
+        test(regression, testSet);
+    }
+
+    private static void set2() throws IOException {
+        ExcelReader reader = new ExcelReader("D:\\Source code\\Outer data\\heart disease-logistic\\framingham.xlsx");
+        Pair<Vector, Float>[] data = reader.createLabeledDataset(0, 0, 0, 0, 1);
+
+        Pair<Vector, Float>[] trainingSet = Arrays.copyOfRange(data, 0, (int) (0.7 * data.length));
+        Pair<Vector, Float>[] testSet = Arrays.copyOfRange(data, (int) (0.7 * data.length), data.length);
+
+        featureScaling(trainingSet, testSet);
+
+        LogisticRegression regression = new LogisticRegression(new LogisticPredictor(), trainingSet);
+        regression.train(0.001f,1000);
+
+        System.out.println(regression.cost());
+
+        test(regression, testSet);
+    }
+
+    private static void featureScaling(Pair<Vector, Float>[] trainSet, Pair<Vector, Float>[] testSet) {
+        float[] mean = new float[trainSet[0].first.size()];
+        float[] std = new float[trainSet[0].first.size()];
+
+        for(int i=0;i<mean.length;i++) {
+            for (Pair<Vector, Float> train : trainSet) {
+                mean[i] += train.first.x(i);
+            }
+
+            mean[i] /= trainSet.length;
+        }
+
+        for(int i=0;i<mean.length;i++) {
+            for (Pair<Vector, Float> train : trainSet) {
+                double term = (train.first.x(i) - mean[i]);
+
+                std[i] += term * term;
+            }
+
+            std[i] = (float) Math.sqrt(std[i] / trainSet.length);
+        }
+
+        for (Pair<Vector, Float> train : trainSet) {
+            for (int i = 0; i < trainSet[0].first.size(); i++) {
+                train.first.setX(i, (train.first.x(i) - mean[i]));
+
+                if(std[i] != 0) {
+                    train.first.setX(i, train.first.x(i) / std[i]);
+                }
+            }
+        }
+
+        for (Pair<Vector, Float> test : testSet) {
+            for (int i = 0; i < testSet[0].first.size(); i++) {
+                test.first.setX(i, (test.first.x(i) - mean[i]));
+
+                if(std[i] != 0) {
+                    test.first.setX(i, test.first.x(i) / std[i]);
+                }
+            }
+        }
     }
 
     static void test(LogisticRegression classifier, Pair<Vector, Float>[] dataset){
