@@ -1,4 +1,4 @@
-# Regression
+# Logistic Regression
 
 ## Titanic dataset:  
 Initial result: 36.363636%  
@@ -35,7 +35,7 @@ Initial result: 36.363636%
 930 iterations have passed. Cost: 0.6032233  
 960 iterations have passed. Cost: 0.60114783  
 990 iterations have passed. Cost: 0.59911066  
-0.59844005
+0.59844005  
 90.19139%  
 
 ## Heart disease dataset:  
@@ -74,5 +74,5 @@ Initial result: 15.132178%
 930 iterations have passed. Cost: 0.5873431  
 960 iterations have passed. Cost: 0.5847974  
 990 iterations have passed. Cost: 0.58229166  
-0.58146447
+0.58146447  
 83.135826%  
