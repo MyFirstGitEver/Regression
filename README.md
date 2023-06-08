@@ -76,3 +76,5 @@ Initial result: 15.132178%
 990 iterations have passed. Cost: 0.58229166  
 0.58146447  
 83.135826%  
+
+Dataset shared on drive:  https://drive.google.com/drive/folders/1kX7XpBqVfoJqcIxBwZ_-St7mKftoHyAl?usp=sharing
